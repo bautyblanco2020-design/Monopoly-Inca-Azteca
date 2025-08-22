@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Monopoly Inca–Azteca — Responsive</title>
+<style>
+  :root{
+    --bg:#efe7d8;
+    --panel:#fffef9;
+    --inca:#c5851f;
+    --azte:#1f6b4e;
+    --accent:#6b3b0a;
+    --ink:#1a1a1a;
+    --soft:#f6f0e4;
+    --line:#e6dcc9;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:linear-gradient(180deg,var(--bg),#f6f0e4);
+    color:var(--ink);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  header{
+    padding:10px 14px;
+    display:flex;align-items:center;gap:12px;
+    background:#fff;
+    box-shadow:0 2px 12px rgba(0,0,0,.06);
+    position:sticky;top:0;z-index:30;
+  }
+  .brand{width:42px;height:42px;border-radius:10px;background:linear-gradient(45deg,var(--inca),var(--azte));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+  header h1{font-size:16px;line-height:1.2;margin:0}
+  .tip{margin-left:auto;color:#6b6b6b;font-size:12px}
+  .fs-btn{margin-left:8px;padding:8px 10px;border-radius:8px;border:1px solid #ddd;background:#fafafa;cursor:pointer}
+
+  .app{display:flex;gap:12px;padding:12px;align-items:flex-start;justify-content:center}
+
+  /* ====== TABLERO con scroll y responsive ====== */
+  .board-shell{
+    background:var(--panel);
+    padding:10px;border-radius:12px;
+    box-shadow:0 10px 26px rgba(0,0,0,.08);
+    max-width:100%;
+  }
+  .board-scroll{
+    overflow-x:auto; overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    white-space:nowrap;
+    border-radius:10px;
+    background:#fff;
+    border:1px solid var(--line);
+    position:relative;
+    touch-action:pan-x pinch-zoom;
+  }
+  /* El tablero se escala con clamp para adaptarse a PC y móvil.
+     En pantallas chicas: más angosto/alto con scroll; en desktop: entra completo. */
+  .board{
+    width: clamp(900px, 92vw, 1500px);
+    height: clamp(480px, 60vh, 820px);
+    display:grid;
+    grid-template-columns:repeat(12,1fr);
+    grid-template-rows:repeat(10,1fr);
+    gap:2px;
+    position:relative;
+  }
+  .cell{
+    background:#fff;
+    border:1px solid rgba(0,0,0,.06);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:4px 3px;text-align:center;
+    font-size: clamp(10px, 1.2vw, 13px);
+    line-height:1.15;
+    user-select:none;
+    position:relative;
+  }
+  .corner{background:linear-gradient(180deg,#f1ddbd,#ecd3a7);font-weight:700}
+  .inca{
+    background-image:url(https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=40&auto=format&fit=crop&w=800&h=600);
+    background-size:cover;background-position:center;
+  }
+  .azte{
+    background-image:url(https://images.unsplash.com/photo-1614322533428-1c0a7e6b5f4f?q=40&auto=format&fit=crop&w=800&h=600);
+    background-size:cover;background-position:center;
+  }
+  .veil{position:absolute;inset:0;background:rgba(255,255,255,.8)}
+  .special{background:linear-gradient(180deg,#f5f5f5,#fafafa)}
+  .rail{background:linear-gradient(180deg,#e3d9c9,#f3ede2)}
+  .util{background:linear-gradient(180deg,#e6f1eb,#f5fbf8)}
+  .owner-dot{width:10px;height:10px;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.2);margin-top:3px;border:2px solid #fff;z-index:2}
+  .tokens{pointer-events:none;position:absolute;inset:0}
+  .token{position:absolute;width:18px;height:18px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+  .t0{background:#e53935}.t1{background:#1976d2}.t2{background:#2e7d32}.t3{background:#f4c430}
+
+  /* ====== PANEL LATERAL ====== */
+  .panel{
+    width:380px;max-width:38vw;
+    background:var(--panel);
+    padding:12px;border-radius:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.08);
+    display:flex;flex-direction:column;gap:10px
+  }
+  .section{padding:8px;border-radius:8px;background:transparent}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .players{display:flex;flex-direction:column;gap:8px}
+  .p-card{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfaf6);box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+  .dot{width:26px;height:26px;border-radius:50%}
+  .log{height:210px;overflow:auto;background:#faf9f6;border-radius:8px;padding:8px;border:1px solid rgba(0,0,0,.05);font-size:12px}
+  input[type=text],select{padding:10px;border-radius:8px;border:1px solid #e7dfd2;width:100%}
+  button{padding:11px 12px;border-radius:10px;border:0;background:var(--accent);color:#fff;font-weight:800;letter-spacing:.2px;cursor:pointer}
+  button.secondary{background:#6d6d6d}
+  button:disabled{opacity:.5;pointer-events:none}
+  footer{padding:10px;text-align:center;color:#666;font-size:12px}
+
+  /* ====== OVERLAYS ====== */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000}
+  .modal{width:92%;max-width:520px;background:#fff;padding:16px;border-radius:12px;box-shadow:0 12px 44px rgba(0,0,0,.35)}
+  .modal h2{margin:0 0 8px 0}
+  .small{font-size:12px;color:#666}
+
+  @media (max-width:980px){
+    .app{flex-direction:column;align-items:center}
+    .panel{width:96%}
+    .board{height: clamp(420px, 58vh, 640px)}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">IA</div>
+  <h1>Monopoly Inca–Azteca — Pass & Play (Responsive)</h1>
+  <div class="tip">Horizontal recomendado • Desliza ↔ si no entra</div>
+  <button id="btnFS" class="fs-btn" title="Pantalla completa">Pantalla completa</button>
+</header>
+
+<div class="app">
+  <div class="board-shell">
+    <div class="board-scroll" id="boardScroll">
+      <div id="board" class="board"></div>
+      <div id="tokens" class="tokens"></div>
+    </div>
+  </div>
+
+  <aside class="panel">
+    <div class="section">
+      <div class="row">
+        <input id="playerName" type="text" placeholder="Nombre Jugador 1" />
+        <select id="numPlayers" title="Cantidad de jugadores">
+          <option>2</option><option>3</option><option selected>4</option>
+        </select>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="btnStart">Iniciar partida</button>
+        <button id="btnMenu" class="secondary">Menú</button>
+      </div>
+      <div class="small">Toca o haz clic en una casilla para ver detalles.</div>
+    </div>
+
+    <div class="section">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <strong>Acciones</strong>
+        <div class="small">Turno: <span id="turnLabel">—</span></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="btnRoll" class="secondary" disabled>🎲 Tirar dado</button>
+        <button id="btnBuy" class="secondary" disabled>🏛 Comprar</button>
+        <button id="btnPay" class="secondary" disabled>💰 Pagar multa</button>
+        <button id="btnPass" class="secondary" disabled>➡️ Terminar turno</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <strong>Jugadores</strong>
+      <div id="players" class="players" style="margin-top:8px"></div>
+    </div>
+
+    <div class="section">
+      <strong>Registro</strong>
+      <div id="log" class="log"></div>
+    </div>
+  </aside>
+</div>
+
+<footer>Proyecto escolar • Temática Inca/Azteca • Pass & Play • Responsive móvil/PC</footer>
+
+<!-- ====== MENÚ ====== -->
+<div id="menuOverlay" class="overlay">
+  <div class="modal">
+    <h2>Menú</h2>
+    <div class="row">
+      <button id="menuNew">Nueva partida</button>
+      <button id="menuCredits" class="secondary">Créditos</button>
+      <button id="menuClose" class="secondary">Cerrar</button>
+    </div>
+    <p class="small" style="margin-top:8px">Flujo: Tirar dado → Comprar si corresponde → Terminar turno. En cárcel: pagar $50 o esperar 3 turnos.</p>
+  </div>
+</div>
+
+<!-- ====== CRÉDITOS ====== -->
+<div id="creditsOverlay" class="overlay">
+  <div class="modal">
+    <h2>Créditos</h2>
+    <p>Monopoly Inca–Azteca (versión educativa). Diseño y código: ChatGPT. Imágenes: Unsplash.</p>
+    <button id="creditsClose" class="secondary">Cerrar</button>
+  </div>
+</div>
+
+<script>
+/* ==========================================================
+   Monopoly Inca–Azteca — Responsive
+   ========================================================== */
+
+/* ---------- Definición de casillas (40) ---------- */
+const TILES = [
+  {id:0,name:"Salida",type:"special"},
+
+  {id:1,name:"Cusco",type:"prop",culture:"Inca",price:60,rent:2},
+  {id:2,name:"Caja Comunitaria",type:"community"},
+  {id:3,name:"Machu Picchu",type:"prop",culture:"Inca",price:60,rent:4},
+  {id:4,name:"Tributo al Inti",type:"tax",price:200},
+  {id:5,name:"Camino del Inca (Ferrocarril)",type:"rail",culture:"Inca",price:200,rent:25},
+  {id:6,name:"Qoricancha",type:"prop",culture:"Inca",price:100,rent:6},
+  {id:7,name:"Suerte del Valle",type:"chance"},
+  {id:8,name:"Sacsayhuamán",type:"prop",culture:"Inca",price:100,rent:6},
+  {id:9,name:"Ollantaytambo",type:"prop",culture:"Inca",price:120,rent:8},
+
+  {id:10,name:"Cárcel / Espera",type:"jail"},
+
+  {id:11,name:"Tenochtitlán",type:"prop",culture:"Azteca",price:140,rent:10},
+  {id:12,name:"Servicios del Lago",type:"utility",culture:"Azteca",price:150},
+  {id:13,name:"Cholula",type:"prop",culture:"Azteca",price:140,rent:10},
+  {id:14,name:"Texcoco",type:"prop",culture:"Azteca",price:160,rent:12},
+  {id:15,name:"Camino de Quetzal (Ferrocarril)",type:"rail",culture:"Azteca",price:200,rent:25},
+  {id:16,name:"Tlacopan",type:"prop",culture:"Azteca",price:180,rent:14},
+  {id:17,name:"Suerte del Templo",type:"chance"},
+  {id:18,name:"Teotihuacán",type:"prop",culture:"Azteca",price:180,rent:14},
+  {id:19,name:"Xochimilco",type:"prop",culture:"Azteca",price:200,rent:16},
+
+  {id:20,name:"Estacionamiento Ceremonial",type:"free"},
+
+  {id:21,name:"Pisac",type:"prop",culture:"Inca",price:220,rent:18},
+  {id:22,name:"Caja Comunitaria",type:"community"},
+  {id:23,name:"Valle Sagrado",type:"prop",culture:"Inca",price:220,rent:18},
+  {id:24,name:"Maras",type:"prop",culture:"Inca",price:240,rent:20},
+  {id:25,name:"Andes Express (Ferrocarril)",type:"rail",culture:"Inca",price:200,rent:25},
+  {id:26,name:"Cuzcatlán",type:"prop",culture:"Azteca",price:260,rent:22},
+  {id:27,name:"Tributo Tlatoani",type:"tax",price:200},
+  {id:28,name:"Tenango",type:"prop",culture:"Azteca",price:260,rent:22},
+  {id:29,name:"Huexotla",type:"prop",culture:"Azteca",price:280,rent:24},
+
+  {id:30,name:"Ir a la Cárcel",type:"goto_jail"},
+
+  {id:31,name:"Huayna Picchu",type:"prop",culture:"Inca",price:300,rent:26},
+  {id:32,name:"Servicios de la Cima",type:"utility",culture:"Inca",price:150},
+  {id:33,name:"Inti Raymi",type:"prop",culture:"Inca",price:300,rent:26},
+  {id:34,name:"Sacsayhuamán Eventos",type:"prop",culture:"Inca",price:320,rent:28},
+  {id:35,name:"Ferrocarril del Sol",type:"rail",culture:"Azteca",price:200,rent:25},
+  {id:36,name:"Coatlinchan",type:"prop",culture:"Azteca",price:350,rent:35},
+  {id:37,name:"Suerte General",type:"chance"},
+  {id:38,name:"Impuesto Patrimonial",type:"tax",price:100},
+  {id:39,name:"Tlatelolco",type:"prop",culture:"Azteca",price:400,rent:50}
+];
+
+/* ---------- Estado ---------- */
+const PLAYER_COLORS = ['#e53935','#1976d2','#2e7d32','#f4c430'];
+let state = {
+  players: [], // {id,name,pos,money,properties,inJail,turnsInJail}
+  turn: 0,
+  board: JSON.parse(JSON.stringify(TILES))
+};
+
+/* ---------- Mapeo RECTANGULAR 12x10 (perímetro 40) ---------- */
+const W=12, H=10; // columnas x filas
+const gridMap = {}; // tileId -> {r,c}
+(function mapRect(){
+  const coords=[];
+  for(let c=0;c<W;c++) coords.push([0,c]);           // fila superior
+  for(let r=1;r<H;r++) coords.push([r,W-1]);         // derecha
+  for(let c=W-2;c>=0;c--) coords.push([H-1,c]);      // inferior
+  for(let r=H-2;r>=1;r--) coords.push([r,0]);        // izquierda
+  for(let i=0;i<40;i++) gridMap[i] = {r:coords[i][0],c:coords[i][1]};
+})();
+
+/* ---------- DOM ---------- */
+const boardEl = document.getElementById('board');
+const tokensEl = document.getElementById('tokens');
+const logEl=document.getElementById('log');
+
+/* ---------- Utilidades ---------- */
+function log(msg){ const t=new Date().toLocaleTimeString(); logEl.innerHTML = `<div>[${t}] ${msg}</div>` + logEl.innerHTML; }
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+/* ---------- Render del tablero ---------- */
+function renderBoard(){
+  boardEl.innerHTML='';
+  for(let r=0;r<H;r++){
+    for(let c=0;c<W;c++){
+      let tileId=null;
+      for(let id=0;id<40;id++){ const g=gridMap[id]; if(g.r===r && g.c===c){ tileId=id; break; } }
+      const cell=document.createElement('div');
+      cell.className='cell';
+      if(tileId===null){ cell.style.background='#f4efe4'; boardEl.appendChild(cell); continue; }
+      const tile=state.board[tileId];
+
+      // estilo por tipo
+      if(tile.type==='prop') cell.classList.add(tile.culture==='Inca'?'inca':'azte');
+      else if(tile.type==='rail') cell.classList.add('rail');
+      else if(tile.type==='utility') cell.classList.add('util');
+      else if(tile.type==='jail' || tile.type==='goto_jail' || tile.type==='free' || tile.type==='special') cell.classList.add('corner');
+      else cell.classList.add('special');
+
+      if(tile.type==='prop'){ const v=document.createElement('div'); v.className='veil'; cell.appendChild(v); }
+
+      // título
+      const title=document.createElement('div');
+      let name=tile.name.length>20?tile.name.slice(0,19)+'…':tile.name;
+      title.textContent=name;
+      title.style.fontWeight='700'; title.style.position='relative'; title.style.zIndex='1';
+      title.style.padding='0 4px';
+      cell.appendChild(title);
+
+      // sublínea
+      const sub=document.createElement('div');
+      sub.style.fontSize='11px'; sub.style.position='relative'; sub.style.zIndex='1';
+      if(tile.type==='prop' || tile.type==='rail' || tile.type==='utility'){ sub.textContent=`$${tile.price}`; }
+      else if(tile.type==='tax'){ sub.textContent=`Paga $${tile.price}`; }
+      else if(tile.type==='jail'){ sub.textContent='Cárcel'; }
+      else if(tile.type==='goto_jail'){ sub.textContent='Ir a Cárcel'; }
+      else if(tile.type==='free'){ sub.textContent='Libre / Descanso'; }
+      else if(tile.type==='community'){ sub.textContent='comunitaria'; }
+      else if(tile.type==='chance'){ sub.textContent='suerte'; }
+      cell.appendChild(sub);
+
+      cell.dataset.tileId=tileId;
+
+      if(tile.owner!==undefined && tile.owner!==null){
+        const dot=document.createElement('div');
+        dot.className='owner-dot';
+        dot.style.background=PLAYER_COLORS[tile.owner];
+        cell.appendChild(dot);
+      }
+
+      // soporte click + touch
+      cell.addEventListener('click',()=>showTileDetail(tileId));
+      cell.addEventListener('touchend',(ev)=>{ ev.preventDefault(); showTileDetail(tileId); },{passive:false});
+
+      boardEl.appendChild(cell);
+    }
+  }
+  renderTokens();
+}
+
+/* ---------- Fichas ---------- */
+function renderTokens(){
+  tokensEl.innerHTML='';
+  const boardRect=boardEl.getBoundingClientRect();
+  const rects={};
+  for(const el of boardEl.querySelectorAll('[data-tile-id]')){
+    rects[Number(el.dataset.tileId)] = el.getBoundingClientRect();
+  }
+  for(const p of state.players){
+    const t=document.createElement('div');
+    t.className='token t'+p.id;
+    const r=rects[p.pos];
+    if(r){
+      const left = r.left - boardRect.left + r.width*0.18 + (p.id%2)*r.width*0.38 - 9;
+      const top  = r.top  - boardRect.top  + r.height*0.18 + (p.id>1? r.height*0.38 : 0) - 9;
+      t.style.left=left+'px';
+      t.style.top=top+'px';
+    } else { t.style.left='2px'; t.style.top='2px'; }
+    t.title=state.players[p.id].name;
+    tokensEl.appendChild(t);
+  }
+}
+
+/* ---------- UI Jugadores ---------- */
+function updatePlayersUI(){
+  const box=document.getElementById('players');
+  box.innerHTML='';
+  state.players.forEach((p,idx)=>{
+    const card=document.createElement('div'); card.className='p-card';
+    const d=document.createElement('div'); d.className='dot'; d.style.background=PLAYER_COLORS[idx];
+    const info=document.createElement('div');
+    info.innerHTML=`<strong>${p.name}</strong><div class="small">Dinero: $${p.money} • Pos: ${p.pos}${p.inJail?' • 🏛 Cárcel':''}</div>`;
+    card.appendChild(d); card.appendChild(info);
+    if(idx===state.turn){ const b=document.createElement('div'); b.textContent='TURNO'; b.style.marginLeft='auto'; b.style.fontWeight='800'; card.appendChild(b); }
+    box.appendChild(card);
+  });
+  document.getElementById('turnLabel').textContent = state.players[state.turn]? state.players[state.turn].name : '—';
+}
+
+/* ---------- Botones habilitados ---------- */
+function setButtons({roll,buy,pay,pass}){
+  document.getElementById('btnRoll').disabled = !roll;
+  document.getElementById('btnBuy').disabled  = !buy;
+  document.getElementById('btnPay').disabled  = !pay;
+  document.getElementById('btnPass').disabled = !pass;
+}
+
+/* ---------- Juego ---------- */
+function newGame(){
+  const name = (document.getElementById('playerName').value||'Jugador 1').trim();
+  const num  = parseInt(document.getElementById('numPlayers').value)||4;
+
+  state.players=[];
+  for(let i=0;i<num;i++){
+    state.players.push({id:i,name: i===0? name : `Jugador ${i+1}`,pos:0,money:1500,properties:[],inJail:false,turnsInJail:0});
+  }
+  state.turn=0;
+  state.board = JSON.parse(JSON.stringify(TILES));
+  state.board.forEach(t=>{ t.owner=null; });
+
+  renderBoard();
+  renderTokens();
+  updatePlayersUI();
+
+  setButtons({roll:true,buy:false,pay:false,pass:true});
+  log(`Nueva partida: ${num} jugadores. Comienza ${state.players[0].name}.`);
+
+  const scroll = document.getElementById('boardScroll');
+  scroll.scrollLeft = 0;
+}
+
+function roll(){
+  const p=state.players[state.turn];
+  if(!p) return;
+  if(p.inJail){
+    log(`${p.name} está en la cárcel. Pagá multa ($50) o Termina turno. Restan ${p.turnsInJail} turnos.`);
+    setButtons({roll:false,buy:false,pay:true,pass:true});
+    return;
+  }
+  const d1=rand(1,6), d2=rand(1,6), s=d1+d2;
+  log(`${p.name} tiró ${d1} + ${d2} = ${s}`);
+  movePlayer(p,s);
+}
+
+function movePlayer(p,steps){
+  let moved=0;
+  const it=setInterval(()=>{
+    p.pos = (p.pos+1)%40;
+    moved++;
+    renderBoard(); updatePlayersUI();
+    if(moved>=steps){
+      clearInterval(it);
+      landing(p);
+    }
+  },120);
+}
+
+function landing(p){
+  const t=state.board[p.pos];
+  log(`${p.name} cayó en <strong>${t.name}</strong>`);
+  if(t.type==='goto_jail'){ sendToJail(p); setButtons({roll:false,buy:false,pay:true,pass:true}); updatePlayersUI(); return; }
+
+  if(t.type==='prop' || t.type==='rail' || t.type==='utility'){
+    if(t.owner===null){
+      setButtons({roll:false,buy:true,pay:false,pass:true});
+      log(`Propiedad disponible por $${t.price}.`);
+    }else if(t.owner!==p.id){
+      const owner=state.players[t.owner];
+      let rent = t.rent || Math.max(10, Math.floor(t.price/5));
+      if(t.type==='utility') { rent = rand(4,12)*10; }
+      p.money -= rent; owner.money += rent;
+      log(`${p.name} pagó $${rent} a ${owner.name} por ${t.name}.`);
+      setButtons({roll:false,buy:false,pay:false,pass:true});
+    }else{
+      log(`Es tu propiedad.`);
+      setButtons({roll:false,buy:false,pay:false,pass:true});
+    }
+  } else if(t.type==='tax'){
+    p.money -= t.price; log(`${p.name} pagó impuesto de $${t.price}.`);
+    setButtons({roll:false,buy:false,pay:false,pass:true});
+  } else if(t.type==='community'){
+    const v=rand(-100,200); p.money+=v; log(`Caja Comunitaria: ${v>=0?'recibe':'paga'} $${Math.abs(v)}.`);
+    setButtons({roll:false,buy:false,pay:false,pass:true});
+  } else if(t.type==='chance'){
+    chanceCard(p);
+  } else if(t.type==='jail'){
+    log(`Visita a la cárcel.`);
+    setButtons({roll:false,buy:false,pay:false,pass:true});
+  } else if(t.type==='free'){
+    log(`Descanso en Estacionamiento Ceremonial.`);
+    setButtons({roll:false,buy:false,pay:false,pass:true});
+  }
+  updatePlayersUI(); renderBoard();
+}
+
+function buy(){
+  const p=state.players[state.turn];
+  const t=state.board[p.pos];
+  if(!(t && (t.type==='prop'||t.type==='rail'||t.type==='utility'))){ log('No hay propiedad que comprar aquí.'); return; }
+  if(t.owner!==null){ log('Ya tiene dueño.'); return; }
+  if(p.money < t.price){ log('No alcanza el dinero.'); return; }
+  p.money -= t.price; t.owner = p.id; p.properties.push(t.id);
+  log(`${p.name} compró ${t.name} por $${t.price}.`);
+  setButtons({roll:false,buy:false,pay:false,pass:true});
+  updatePlayersUI(); renderBoard();
+}
+
+function passTurn(){
+  const p=state.players[state.turn];
+  if(p.inJail){
+    p.turnsInJail--;
+    if(p.turnsInJail<=0){ p.inJail=false; p.turnsInJail=0; log(`${p.name} cumple condena y sale de la cárcel.`); }
+    else { log(`${p.name} permanece en la cárcel. Restan ${p.turnsInJail}.`); }
+  }
+  state.turn = (state.turn+1)%state.players.length;
+  setButtons({roll:true,buy:false,pay:false,pass:true});
+  updatePlayersUI();
+  renderBoard();
+  log(`Turno de ${state.players[state.turn].name}.`);
+}
+
+function payFine(){
+  const p=state.players[state.turn];
+  if(!p.inJail){ log('No estás en la cárcel.'); return; }
+  const fine=50;
+  if(p.money<fine){ log('No alcanza el dinero para la multa.'); return; }
+  p.money-=fine; p.inJail=false; p.turnsInJail=0;
+  log(`${p.name} pagó $${fine} y salió de la cárcel.`);
+  setButtons({roll:true,buy:false,pay:false,pass:true});
+  updatePlayersUI(); renderBoard();
+}
+
+function chanceCard(p){
+  const cards=[
+    {t:'move',v:3,msg:'Avanza 3 casillas hacia el oriente.'},
+    {t:'pay',v:100,msg:'Donación a templo: paga $100.'},
+    {t:'get',v:150,msg:'Recompensa del sacerdote: recibe $150.'},
+    {t:'jail',v:0,msg:'Orden real: ve a la cárcel.'},
+    {t:'move',v:-3,msg:'Retrocede 3 casillas.'}
+  ];
+  const c=cards[rand(0,cards.length-1)];
+  log(`Suerte: ${c.msg}`);
+  if(c.t==='move'){ p.pos = (p.pos + c.v + 40) % 40; landing(p); }
+  else if(c.t==='pay'){ p.money -= c.v; }
+  else if(c.t==='get'){ p.money += c.v; }
+  else if(c.t==='jail'){ sendToJail(p); }
+  updatePlayersUI(); renderBoard();
+}
+
+function sendToJail(p){
+  const jailIndex = TILES.findIndex(t=>t.type==='jail');
+  p.pos = jailIndex >=0 ? jailIndex : 10;
+  p.inJail = true; p.turnsInJail = 3;
+  log(`${p.name} va a la cárcel (3 turnos o paga multa).`);
+}
+
+/* ---------- Detalle de casilla ---------- */
+function showTileDetail(id){
+  const t=state.board[id];
+  if(!t) return;
+  let s=`${t.name}\nTipo: ${t.type}`;
+  if(t.type==='prop' || t.type==='rail' || t.type==='utility'){
+    s+=`\nPrecio: $${t.price}\nAlquiler base: $${t.rent || Math.max(10,Math.floor(t.price/5))}\nDueño: ${t.owner!==null? state.players[t.owner].name : 'Nadie'}`;
+  } else if(t.type==='tax'){ s+=`\nImpuesto: $${t.price}`; }
+  alert(s);
+}
+
+/* ---------- Menú / init ---------- */
+const overlayMenu = document.getElementById('menuOverlay');
+const overlayCred = document.getElementById('creditsOverlay');
+function openMenu(){ overlayMenu.style.display='flex'; }
+function closeMenu(){ overlayMenu.style.display='none'; }
+function openCred(){ overlayCred.style.display='flex'; }
+function closeCred(){ overlayCred.style.display='none'; }
+
+document.getElementById('btnStart').addEventListener('click',newGame,{passive:true});
+document.getElementById('btnMenu').addEventListener('click',openMenu,{passive:true});
+document.getElementById('menuNew').addEventListener('click',()=>{ newGame(); closeMenu(); },{passive:true});
+document.getElementById('menuCredits').addEventListener('click',()=>{ closeMenu(); openCred(); },{passive:true});
+document.getElementById('menuClose').addEventListener('click',closeMenu,{passive:true});
+document.getElementById('creditsClose').addEventListener('click',closeCred,{passive:true});
+
+document.getElementById('btnRoll').addEventListener('click',roll,{passive:true});
+document.getElementById('btnBuy').addEventListener('click',buy,{passive:true});
+document.getElementById('btnPass').addEventListener('click',passTurn,{passive:true});
+document.getElementById('btnPay').addEventListener('click',payFine,{passive:true});
+
+/* Pantalla completa (con fallback iOS) */
+const fsBtn = document.getElementById('btnFS');
+fsBtn.addEventListener('click', ()=>{
+  const root = document.documentElement;
+  const el = document.getElementById('boardScroll');
+  if(document.fullscreenElement){
+    document.exitFullscreen?.();
+    fsBtn.textContent = 'Pantalla completa';
+  }else{
+    (el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen || root.requestFullscreen || root.webkitRequestFullscreen || root.msRequestFullscreen)?.call(el);
+    fsBtn.textContent = 'Salir de pantalla completa';
+  }
+});
+
+/* Ajuste de fichas cuando cambia el tamaño/rotación */
+let resizeTimer=null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(()=>{ renderBoard(); }, 120);
+});
+
+/* Inicializa */
+function init(){
+  renderBoard();
+  updatePlayersUI();
+  setButtons({roll:false,buy:false,pay:false,pass:false});
+  log('Listo. Presioná "Iniciar partida" para comenzar. Desliza el tablero si no entra en pantalla.');
+}
+init();
+</script>
+</body>
+</html>
